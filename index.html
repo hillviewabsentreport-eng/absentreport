@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absent Reporter — Hillview College</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F1EC;
+    --surface: #FDFCFA;
+    --border: #E2DDD6;
+    --text: #1A1714;
+    --muted: #7A746D;
+    --accent: #1B4332;
+    --accent-light: #D8F3DC;
+    --accent-text: #1B4332;
+    --danger: #9B1D20;
+    --warning-bg: #FFF8E7;
+    --warning-border: #F0C040;
+    --step-active: #1B4332;
+    --step-done: #40916C;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 4rem;
+  }
+
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .school-crest {
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .header-text h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .header-text p {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 1px;
+  }
+
+  .anon-pill {
+    margin-left: auto;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  .anon-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #74C69D;
+  }
+
+  main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+  }
+
+  .progress-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-seg {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .progress-seg.done { background: var(--step-done); }
+  .progress-seg.active { background: var(--step-active); }
+
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 10px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .step-card.locked {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .step-card.done {
+    border-color: var(--step-done);
+    background: #F0FAF4;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-card.done .step-num {
+    background: var(--step-done);
+  }
+
+  .step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .step-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--step-done);
+    font-weight: 500;
+  }
+
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text);
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .chip.selected {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .period-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+  }
+
+  .p-btn {
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .p-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .p-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .teacher-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--accent-light);
+    border: 1px solid #95D5B2;
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .teacher-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .teacher-name { font-size: 15px; font-weight: 600; }
+  .teacher-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .override-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  select {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A746D' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+  }
+
+  select:focus { outline: none; border-color: var(--accent); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: -0.01em;
+  }
+
+  .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .submit-btn:not(:disabled):active { transform: scale(0.98); }
+  .submit-btn:not(:disabled):hover { opacity: 0.9; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    border: 2px solid var(--step-done);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 28px;
+  }
+
+  .success-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .success-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    text-align: left;
+    margin-bottom: 1.25rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: var(--muted); }
+  .summary-val { font-weight: 500; font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  .reset-btn {
+    padding: 10px 24px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+
+  .error-banner {
+    display: none;
+    background: #FFF0F0;
+    border: 1px solid #F5C0C0;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--danger);
+    margin-top: 8px;
+  }
+
+  .config-notice {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #7A5F00;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+
+  .config-notice strong { font-weight: 600; }
+  .config-notice code {
+    font-family: 'DM Mono', monospace;
+    background: rgba(0,0,0,0.07);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="school-crest">🎓</div>
+  <div class="header-text">
+    <h1>Absent Reporter</h1>
+    <p>Hillview College, Tunapuna</p>
+  </div>
+  <div class="anon-pill">
+    <div class="anon-dot"></div>
+    Anonymous
+  </div>
+</header>
+
+<main>
+
+  <!-- Config notice — remove after setup -->
+  <div class="config-notice" id="config-notice">
+    <strong>⚙ Setup required:</strong> Replace <code>PASTE_YOUR_APPS_SCRIPT_URL_HERE</code> in <code>app.js</code> with your Google Apps Script URL. See <code>SETUP.md</code> for instructions.
+  </div>
+
+  <div id="form-area">
+    <div class="progress-bar">
+      <div class="progress-seg" id="seg1"></div>
+      <div class="progress-seg" id="seg2"></div>
+      <div class="progress-seg" id="seg3"></div>
+      <div class="progress-seg" id="seg4"></div>
+    </div>
+
+    <!-- Step 1: Day -->
+    <div class="step-card" id="card-day">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-label">Which day is it?</div>
+        <div class="step-value" id="val-day"></div>
+      </div>
+      <div class="chip-grid" id="day-chips"></div>
+    </div>
+
+    <!-- Step 2: Class -->
+    <div class="step-card locked" id="card-class">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-label">Which class?</div>
+        <div class="step-value" id="val-class"></div>
+      </div>
+      <div class="chip-grid" id="class-chips"></div>
+    </div>
+
+    <!-- Step 3: Period -->
+    <div class="step-card locked" id="card-period">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-label">Which period?</div>
+        <div class="step-value" id="val-period"></div>
+      </div>
+      <div class="period-grid" id="period-btns"></div>
+    </div>
+
+    <!-- Step 4: Teacher -->
+    <div class="step-card locked" id="card-teacher">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-label">Confirm the teacher</div>
+      </div>
+      <div id="teacher-display"></div>
+      <span class="override-label">Not correct? Select the right teacher:</span>
+      <select id="teacher-select" onchange="overrideTeacher(this.value)">
+        <option value="">— Use auto-suggested teacher —</option>
+      </select>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitReport()">
+      Submit absence report
+    </button>
+    <div class="error-banner" id="error-banner">
+      Failed to submit. Please check your connection and try again.
+    </div>
+  </div>
+
+  <!-- Success screen -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Report submitted</div>
+    <div class="success-sub" id="success-sub">Thank you. This absence has been recorded anonymously.</div>
+    <div class="summary-box" id="summary-box"></div>
+    <button class="reset-btn" onclick="resetForm()">Report another absence</button>
+  </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
