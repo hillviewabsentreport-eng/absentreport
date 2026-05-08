@@ -5,7 +5,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9CTh2iOePUfdE
 // ───────────────────────────────────────────────────────────────────────────
 
 // Hide config notice if URL has been set
-if (APPS_SCRIPT_URL !== "https://script.google.com/macros/s/AKfycbz9CTh2iOePUfdEtqBsM-Af87nQ9lzcs-jGnlMl-Y9Jdc9ISkf1_0T4lCfJmM-VpO8G/exec") {
+if (APPS_SCRIPT_URL !== "PASTE_YOUR_APPS_SCRIPT_URL_HERE") {
   document.getElementById("config-notice").style.display = "none";
 }
 
