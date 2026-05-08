@@ -1,7 +1,7 @@
 // ── CONFIGURATION ──────────────────────────────────────────────────────────
 // Replace this URL with your deployed Google Apps Script Web App URL
 // See SETUP.md for instructions on how to get this URL
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9CTh2iOePUfdEtqBsM-Af87nQ9lzcs-jGnlMl-Y9Jdc9ISkf1_0T4lCfJmM-VpO8G/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylBT8N2HmAPoxrlzXufSOprwx7kmYU8ZHAggDEIr0SVfcCApUsqKH31XWmxJi4g2zq/exec";
 // ───────────────────────────────────────────────────────────────────────────
 
 // Hide config notice if URL has been set
