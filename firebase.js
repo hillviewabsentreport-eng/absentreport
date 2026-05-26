@@ -1,3 +1,14 @@
+// ── Firebase init ───────────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 // ═══════════════════════════════════════════════════════════════════
 // FIREBASE CONFIGURATION
 // Replace these values with your own Firebase project config
@@ -15,22 +26,13 @@ const FIREBASE_CONFIG = {
 // ── Apps Script backend URL (same as before) ────────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylBT8N2HmAPoxrlzXufSOprwx7kmYU8ZHAggDEIr0SVfcCApUsqKH31XWmxJi4g2zq/exec";
 
-// ── Firebase init ───────────────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 
 const ACTION_CODE_SETTINGS = {
-  url: window.location.origin + window.location.pathname,
+  url: "https://hillviewabsentreport-eng.github.io/absentreport/index.html",
   handleCodeInApp: true,
 };
 
