@@ -5,14 +5,14 @@ import {
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
   signInWithEmailLink,
+  signInWithPopup,
+  GoogleAuthProvider,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ═══════════════════════════════════════════════════════════════════
 // FIREBASE CONFIGURATION
-// Replace these values with your own Firebase project config
-// See SETUP.md Step 1 for instructions
 // ═══════════════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
    apiKey: "AIzaSyD7t79JAkQ37opp3oCWlBqbGRZogXIwaLg",
@@ -26,10 +26,10 @@ const FIREBASE_CONFIG = {
 // ── Apps Script backend URL (same as before) ────────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylBT8N2HmAPoxrlzXufSOprwx7kmYU8ZHAggDEIr0SVfcCApUsqKH31XWmxJi4g2zq/exec";
 
-
-
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 const ACTION_CODE_SETTINGS = {
   url: "https://hillviewabsentreport-eng.github.io/absentreport/index.html",
@@ -41,6 +41,8 @@ export {
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
   signInWithEmailLink,
+  signInWithPopup,
+  googleProvider,
   onAuthStateChanged,
   signOut,
   ACTION_CODE_SETTINGS,

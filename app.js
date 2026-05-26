@@ -3,6 +3,8 @@ import {
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
   signInWithEmailLink,
+  signInWithPopup,
+  googleProvider,
   onAuthStateChanged,
   signOut,
   ACTION_CODE_SETTINGS,
@@ -134,6 +136,25 @@ window.sendLink = async function() {
     showAuthMsg("Failed to send link: " + err.message, "error");
     btn.disabled = false;
     btn.textContent = "Send magic link";
+  }
+};
+
+window.signInGoogle = async function() {
+  const googleBtn = document.getElementById("google-btn");
+  if (googleBtn) {
+    googleBtn.disabled = true;
+    googleBtn.textContent = "Signing in...";
+  }
+
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch (err) {
+    showAuthMsg("Google sign-in failed: " + err.message, "error");
+  } finally {
+    if (googleBtn) {
+      googleBtn.disabled = false;
+      googleBtn.textContent = "Continue with Google";
+    }
   }
 };
 
