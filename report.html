@@ -8,291 +8,72 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0F1A14;
-    --surface: #172012;
-    --surface2: #1E2B1A;
-    --border: #2A3D24;
-    --text: #E8F0E4;
-    --muted: #7A9470;
-    --accent: #4ADE80;
-    --accent2: #86EFAC;
-    --accent-dim: #1B4332;
-    --danger: #F87171;
-    --warning: #FCD34D;
-    --blue: #60A5FA;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --bg:#0F1A14;--surface:#172012;--surface2:#1E2B1A;--border:#2A3D24;
+    --text:#E8F0E4;--muted:#7A9470;--accent:#4ADE80;--accent-dim:#1B4332;
+    --danger:#F87171;--warning:#FCD34D;--radius:12px;--radius-sm:8px;
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+  .back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:6px;border:1px solid var(--border);transition:all 0.15s;margin-right:4px}
+  .back-btn:hover{color:var(--text);border-color:var(--muted)}
+  .header-text h1{font-size:16px;font-weight:600}
+  .header-text p{font-size:12px;color:var(--muted);margin-top:1px}
+  .refresh-btn{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+  .refresh-btn:hover{background:var(--accent-dim);border-color:var(--accent)}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+  main{max-width:960px;margin:0 auto;padding:1.5rem 1rem 4rem}
 
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+  .loading{text-align:center;padding:4rem 1rem;color:var(--muted)}
+  .spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 1rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--muted);
-    text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    transition: all 0.15s;
-    margin-right: 4px;
-  }
-  .back-btn:hover { color: var(--text); border-color: var(--muted); }
-
-  .header-text h1 { font-size: 16px; font-weight: 600; }
-  .header-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
-
-  .refresh-btn {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 7px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--accent);
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-  }
-  .refresh-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
-
-  main { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-
-  /* Loading */
-  .loading {
-    text-align: center;
-    padding: 4rem 1rem;
-    color: var(--muted);
-  }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    margin: 0 auto 1rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Error */
-  .error-box {
-    background: #2A1010;
-    border: 1px solid #5A2020;
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    color: var(--danger);
-    font-size: 14px;
-    display: none;
-  }
+  .error-box{background:#2A1010;border:1px solid #5A2020;border-radius:var(--radius);padding:1.25rem;color:var(--danger);font-size:14px;display:none}
 
   /* Stat cards */
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-
-  @media (max-width: 500px) { .stat-grid { grid-template-columns: 1fr 1fr; } }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.25rem;
-  }
-
-  .stat-label {
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
-  }
-
-  .stat-value {
-    font-size: 28px;
-    font-weight: 600;
-    font-family: 'DM Mono', monospace;
-    color: var(--accent);
-    line-height: 1;
-  }
-
-  .stat-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+  @media(max-width:600px){.stat-grid{grid-template-columns:1fr 1fr}}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+  .stat-value{font-size:28px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);line-height:1}
+  .stat-sub{font-size:12px;color:var(--muted);margin-top:4px}
 
   /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 4px;
-  }
+  .tabs{display:flex;gap:4px;margin-bottom:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px}
+  .tab{flex:1;padding:8px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;text-align:center}
+  .tab.active{background:var(--accent-dim);color:var(--accent)}
+  .panel{display:none}.panel.active{display:block}
 
-  .tab {
-    flex: 1;
-    padding: 8px;
-    border-radius: 7px;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-    text-align: center;
-  }
+  /* Chart */
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+  .chart-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1rem}
+  .chart-wrap{position:relative;height:220px}
 
-  .tab.active {
-    background: var(--accent-dim);
-    color: var(--accent);
-  }
+  /* Table */
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem}
+  .table-header{padding:12px 16px;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;padding:9px 14px;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)}
+  td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  .bar-cell{width:100px}
+  .mini-bar-wrap{background:var(--bg);border-radius:3px;height:6px;overflow:hidden}
+  .mini-bar{height:100%;border-radius:3px;background:var(--accent);transition:width 0.5s ease}
 
-  /* Panels */
-  .panel { display: none; }
-  .panel.active { display: block; }
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;font-family:'DM Sans',sans-serif}
+  .badge-green{background:var(--accent-dim);color:var(--accent)}
+  .badge-red{background:#2A1010;color:var(--danger)}
+  .badge-yellow{background:#2A2010;color:var(--warning)}
+  .badge-pending{background:#2A2010;color:var(--warning)}
+  .badge-confirmed{background:#0D2A1A;color:#4ADE80}
+  .badge-denied{background:#2A1010;color:var(--danger)}
 
-  /* Chart card */
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
+  .last-updated{text-align:center;font-size:11px;color:var(--muted);margin-top:1rem;font-family:'DM Mono',monospace}
 
-  .chart-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 1rem;
-  }
-
-  .chart-wrap {
-    position: relative;
-    height: 240px;
-  }
-
-  /* Summary table */
-  .table-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 1rem;
-  }
-
-  .table-header {
-    padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-
-  th {
-    text-align: left;
-    padding: 10px 16px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-  }
-
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--surface2); }
-
-  .bar-cell { width: 120px; }
-
-  .mini-bar-wrap {
-    background: var(--bg);
-    border-radius: 3px;
-    height: 6px;
-    overflow: hidden;
-  }
-
-  .mini-bar {
-    height: 100%;
-    border-radius: 3px;
-    background: var(--accent);
-    transition: width 0.5s ease;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .badge-green { background: var(--accent-dim); color: var(--accent); }
-  .badge-red { background: #2A1010; color: var(--danger); }
-  .badge-yellow { background: #2A2010; color: var(--warning); }
-
-  .last-updated {
-    text-align: center;
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 1rem;
-    font-family: 'DM Mono', monospace;
-  }
+  /* Log table scrollable on mobile */
+  .table-scroll{overflow-x:auto}
 </style>
 </head>
 <body>
@@ -307,19 +88,11 @@
 </header>
 
 <main>
-
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <div>Loading absence data…</div>
-  </div>
-
-  <div class="error-box" id="error-box">
-    Could not load data. Make sure your Apps Script URL is set correctly in <code>report.js</code>.
-  </div>
+  <div class="loading" id="loading"><div class="spinner"></div><div>Loading absence data…</div></div>
+  <div class="error-box" id="error-box">Could not load data. Check your Apps Script URL in <code>report.js</code>.</div>
 
   <div id="dashboard" style="display:none">
 
-    <!-- Stat cards -->
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-label">Total Reports</div>
@@ -327,9 +100,14 @@
         <div class="stat-sub">all time</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Teachers Reported</div>
-        <div class="stat-value" id="stat-teachers">0</div>
-        <div class="stat-sub">unique</div>
+        <div class="stat-label">Verified</div>
+        <div class="stat-value" id="stat-verified" style="color:#4ADE80">0</div>
+        <div class="stat-sub">confirmed absent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value" id="stat-pending" style="color:#FCD34D">0</div>
+        <div class="stat-sub">awaiting verification</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Most Absent</div>
@@ -338,61 +116,58 @@
       </div>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
-      <button class="tab active" onclick="showTab('teacher', this)">By Teacher</button>
-      <button class="tab" onclick="showTab('class', this)">By Class</button>
-      <button class="tab" onclick="showTab('day', this)">By Day</button>
+      <button class="tab active" onclick="showTab('teacher',this)">By Teacher</button>
+      <button class="tab" onclick="showTab('class',this)">By Class</button>
+      <button class="tab" onclick="showTab('day',this)">By Day</button>
+      <button class="tab" onclick="showTab('log',this)">Full Log</button>
     </div>
 
-    <!-- Teacher panel -->
+    <!-- Teacher -->
     <div class="panel active" id="panel-teacher">
-      <div class="chart-card">
-        <div class="chart-title">Absences by Teacher</div>
-        <div class="chart-wrap"><canvas id="chart-teacher"></canvas></div>
-      </div>
+      <div class="chart-card"><div class="chart-title">Absences by Teacher</div><div class="chart-wrap"><canvas id="chart-teacher"></canvas></div></div>
       <div class="table-card">
         <div class="table-header">Summary <span id="teacher-count" style="font-size:12px;font-weight:400"></span></div>
-        <table>
-          <thead><tr><th>Teacher</th><th>Reports</th><th class="bar-cell">Frequency</th></tr></thead>
-          <tbody id="table-teacher"></tbody>
-        </table>
+        <table><thead><tr><th>Teacher</th><th>Total</th><th>Confirmed</th><th>Pending</th><th class="bar-cell">Frequency</th></tr></thead>
+        <tbody id="table-teacher"></tbody></table>
       </div>
     </div>
 
-    <!-- Class panel -->
+    <!-- Class -->
     <div class="panel" id="panel-class">
-      <div class="chart-card">
-        <div class="chart-title">Absences by Class</div>
-        <div class="chart-wrap"><canvas id="chart-class"></canvas></div>
-      </div>
+      <div class="chart-card"><div class="chart-title">Absences by Class</div><div class="chart-wrap"><canvas id="chart-class"></canvas></div></div>
       <div class="table-card">
         <div class="table-header">Summary <span id="class-count" style="font-size:12px;font-weight:400"></span></div>
-        <table>
-          <thead><tr><th>Class</th><th>Reports</th><th class="bar-cell">Frequency</th></tr></thead>
-          <tbody id="table-class"></tbody>
-        </table>
+        <table><thead><tr><th>Class</th><th>Reports</th><th class="bar-cell">Frequency</th></tr></thead>
+        <tbody id="table-class"></tbody></table>
       </div>
     </div>
 
-    <!-- Day panel -->
+    <!-- Day -->
     <div class="panel" id="panel-day">
-      <div class="chart-card">
-        <div class="chart-title">Absences by Day</div>
-        <div class="chart-wrap"><canvas id="chart-day"></canvas></div>
-      </div>
+      <div class="chart-card"><div class="chart-title">Absences by Day</div><div class="chart-wrap"><canvas id="chart-day"></canvas></div></div>
       <div class="table-card">
         <div class="table-header">Summary</div>
-        <table>
-          <thead><tr><th>Day</th><th>Reports</th><th class="bar-cell">Frequency</th></tr></thead>
-          <tbody id="table-day"></tbody>
-        </table>
+        <table><thead><tr><th>Day</th><th>Reports</th><th class="bar-cell">Frequency</th></tr></thead>
+        <tbody id="table-day"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Full Log -->
+    <div class="panel" id="panel-log">
+      <div class="table-card">
+        <div class="table-header">All Reports <span id="log-count" style="font-size:12px;font-weight:400"></span></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>ID</th><th>Date & Time</th><th>Day</th><th>Class</th><th>Period</th><th>Teacher</th><th>Reported By</th><th>Status</th></tr></thead>
+            <tbody id="table-log"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <div class="last-updated" id="last-updated"></div>
   </div>
-
 </main>
 
 <script src="report.js"></script>

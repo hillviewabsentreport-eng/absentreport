@@ -1,193 +1,192 @@
 // ── CONFIGURATION ──────────────────────────────────────────────────────────
-// Must match the same URL in app.js 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylBT8N2HmAPoxrlzXufSOprwx7kmYU8ZHAggDEIr0SVfcCApUsqKH31XWmxJi4g2zq/exec";
 // ───────────────────────────────────────────────────────────────────────────
 
 let charts = {};
 
-// ── LOAD DATA ───────────────────────────────────────────────────────────────
 async function loadData() {
   document.getElementById("loading").style.display = "block";
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("error-box").style.display = "none";
-
   try {
-    const url = APPS_SCRIPT_URL + "?action=getReports&t=" + Date.now();
-    const res = await fetch(url);
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=getReports&t=" + Date.now());
     const json = await res.json();
-
     if (json.status !== "success") throw new Error(json.message);
-
     renderDashboard(json.data);
-  } catch (err) {
+  } catch(err) {
     document.getElementById("loading").style.display = "none";
     document.getElementById("error-box").style.display = "block";
     console.error(err);
   }
 }
 
-// ── RENDER ──────────────────────────────────────────────────────────────────
 function renderDashboard(rows) {
   document.getElementById("loading").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
 
-  // rows = array of [reportId, timestamp, day, class, period, teacher, reportedAt]
-  const total = rows.length;
+  // Columns: [0]ID [1]DateTime [2]Day [3]Class [4]Period [5]Teacher [6]ReportedBy [7]Status [8]VerifiedBy [9]VerifiedAt
+  const total     = rows.length;
+  const verified  = rows.filter(r => r[7] === "CONFIRMED").length;
+  const pending   = rows.filter(r => r[7] === "Pending").length;
 
-  // Count by teacher
-  const byTeacher = count(rows, 5);
-  // Count by class
-  const byClass = count(rows, 3);
-  // Count by day
-  const byDay = countDays(rows, 2);
+  document.getElementById("stat-total").textContent    = total;
+  document.getElementById("stat-verified").textContent = verified;
+  document.getElementById("stat-pending").textContent  = pending;
 
-  // Stat cards
-  document.getElementById("stat-total").textContent = total;
-  document.getElementById("stat-teachers").textContent = Object.keys(byTeacher).length;
-
-  const topTeacher = Object.entries(byTeacher).sort((a,b) => b[1]-a[1])[0];
-  if (topTeacher) {
-    document.getElementById("stat-top").textContent = topTeacher[0];
-    document.getElementById("stat-top-count").textContent = topTeacher[1] + " report" + (topTeacher[1] > 1 ? "s" : "");
+  // Only count confirmed for "most absent"
+  const confirmedRows = rows.filter(r => r[7] === "CONFIRMED");
+  const byTeacherAll  = count(rows, 5);
+  const byTeacherConf = count(confirmedRows, 5);
+  const topConfirmed  = Object.entries(byTeacherConf).sort((a,b)=>b[1]-a[1])[0];
+  const topOverall    = Object.entries(byTeacherAll).sort((a,b)=>b[1]-a[1])[0];
+  if (topConfirmed) {
+    document.getElementById("stat-top").textContent       = topConfirmed[0];
+    document.getElementById("stat-top-count").textContent = topConfirmed[1] + " confirmed";
+  } else if (topOverall) {
+    document.getElementById("stat-top").textContent       = topOverall[0];
+    document.getElementById("stat-top-count").textContent = topOverall[1] + " total reports";
+  } else {
+    document.getElementById("stat-top").textContent       = "—";
+    document.getElementById("stat-top-count").textContent = "";
   }
 
-  // Render all views
-  renderChart("chart-teacher", byTeacher, "bar");
-  renderTable("table-teacher", byTeacher);
-  document.getElementById("teacher-count").textContent = Object.keys(byTeacher).length + " teachers";
+  // Teacher tab — show total, confirmed, pending per teacher
+  renderTeacherTable(rows);
+  renderChart("chart-teacher", byTeacherAll, false);
+  document.getElementById("teacher-count").textContent = Object.keys(byTeacherAll).length + " teachers";
 
-  renderChart("chart-class", byClass, "bar");
-  renderTable("table-class", byClass);
+  // Class tab
+  const byClass = count(rows, 3);
+  renderChart("chart-class", byClass, false);
+  renderSimpleTable("table-class", byClass);
   document.getElementById("class-count").textContent = Object.keys(byClass).length + " classes";
 
-  renderChart("chart-day", byDay, "bar", true);
-  renderTable("table-day", byDay);
+  // Day tab
+  const byDay = countDays(rows, 2);
+  renderChart("chart-day", byDay, true);
+  renderSimpleTable("table-day", byDay);
+
+  // Full log
+  renderLog(rows);
 
   document.getElementById("last-updated").textContent =
-    "Last updated: " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    "Last updated: " + new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
 }
 
-// ── COUNT HELPERS ────────────────────────────────────────────────────────────
-function count(rows, colIndex) {
-  const result = {};
-  rows.forEach(row => {
-    const key = row[colIndex] || "Unknown";
-    result[key] = (result[key] || 0) + 1;
-  });
-  // Sort descending
-  return Object.fromEntries(Object.entries(result).sort((a,b) => b[1]-a[1]));
+function count(rows, col) {
+  const r = {};
+  rows.forEach(row => { const k = row[col]||"Unknown"; r[k] = (r[k]||0)+1; });
+  return Object.fromEntries(Object.entries(r).sort((a,b)=>b[1]-a[1]));
 }
 
-function countDays(rows, colIndex) {
+function countDays(rows, col) {
   const order = ["Day 1","Day 2","Day 3","Day 4","Day 5","Day 6"];
-  const raw = count(rows, colIndex);
+  const raw = count(rows, col);
   const result = {};
   order.forEach(d => { if (raw[d]) result[d] = raw[d]; });
-  // Add any unexpected values
-  Object.entries(raw).forEach(([k,v]) => { if (!result[k]) result[k] = v; });
+  Object.entries(raw).forEach(([k,v]) => { if (!result[k]) result[k]=v; });
   return result;
 }
 
-// ── CHART ────────────────────────────────────────────────────────────────────
-function renderChart(canvasId, data, type, isDay = false) {
+function renderTeacherTable(rows) {
+  const tbody   = document.getElementById("table-teacher");
+  const teachers = {};
+  rows.forEach(row => {
+    const t = row[5]||"Unknown";
+    if (!teachers[t]) teachers[t] = {total:0,confirmed:0,pending:0};
+    teachers[t].total++;
+    if (row[7]==="CONFIRMED") teachers[t].confirmed++;
+    if (row[7]==="Pending")   teachers[t].pending++;
+  });
+  const sorted = Object.entries(teachers).sort((a,b)=>b[1].total-a[1].total);
+  const max    = sorted.length > 0 ? sorted[0][1].total : 1;
+  tbody.innerHTML = "";
+  sorted.forEach(([name, d], i) => {
+    const pct  = Math.round((d.total/max)*100);
+    let badge  = `<span class="badge badge-green">${d.total}</span>`;
+    if (i===0 && d.total>1) badge = `<span class="badge badge-red">${d.total}</span>`;
+    else if (i===1 && sorted.length>2) badge = `<span class="badge badge-yellow">${d.total}</span>`;
+    tbody.innerHTML += `<tr>
+      <td>${name}</td>
+      <td>${badge}</td>
+      <td><span class="badge badge-confirmed">${d.confirmed}</span></td>
+      <td><span class="badge badge-pending">${d.pending}</span></td>
+      <td class="bar-cell"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${pct}%"></div></div></td>
+    </tr>`;
+  });
+  if (sorted.length===0) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No data yet</td></tr>`;
+}
+
+function renderSimpleTable(tbodyId, data) {
+  const tbody   = document.getElementById(tbodyId);
+  const entries = Object.entries(data);
+  const max     = entries.length > 0 ? entries[0][1] : 1;
+  tbody.innerHTML = "";
+  entries.forEach(([key,val],i) => {
+    const pct  = Math.round((val/max)*100);
+    let badge  = `<span class="badge badge-green">${val}</span>`;
+    if (i===0&&val>1) badge = `<span class="badge badge-red">${val}</span>`;
+    else if (i===1&&entries.length>2) badge = `<span class="badge badge-yellow">${val}</span>`;
+    tbody.innerHTML += `<tr><td>${key}</td><td>${badge}</td>
+      <td class="bar-cell"><div class="mini-bar-wrap"><div class="mini-bar" style="width:${pct}%"></div></div></td></tr>`;
+  });
+  if (entries.length===0) tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:2rem">No data yet</td></tr>`;
+}
+
+function renderLog(rows) {
+  const tbody = document.getElementById("table-log");
+  document.getElementById("log-count").textContent = rows.length + " reports";
+  tbody.innerHTML = "";
+  // Most recent first
+  [...rows].reverse().forEach(row => {
+    const status = row[7] || "Pending";
+    let badgeClass = "badge-pending";
+    if (status==="CONFIRMED") badgeClass="badge-confirmed";
+    if (status==="DENIED")    badgeClass="badge-denied";
+    tbody.innerHTML += `<tr>
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td>${row[4]}</td>
+      <td>${row[5]}</td>
+      <td style="font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted)">${row[6]||""}</td>
+      <td><span class="badge ${badgeClass}">${status}</span></td>
+    </tr>`;
+  });
+  if (rows.length===0) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">No reports yet</td></tr>`;
+}
+
+function renderChart(canvasId, data, isDay) {
   const labels = Object.keys(data);
   const values = Object.values(data);
-  const maxVal = Math.max(...values);
-
-  const colors = labels.map((_, i) => {
-    const greens = ["#4ADE80","#34D399","#6EE7B7","#86EFAC","#A7F3D0","#D1FAE5"];
-    return greens[i % greens.length];
-  });
-
-  if (charts[canvasId]) {
-    charts[canvasId].destroy();
-  }
-
+  const greens = ["#4ADE80","#34D399","#6EE7B7","#86EFAC","#A7F3D0","#D1FAE5"];
+  const colors = labels.map((_,i) => greens[i % greens.length]);
+  if (charts[canvasId]) charts[canvasId].destroy();
   const ctx = document.getElementById(canvasId).getContext("2d");
   charts[canvasId] = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        backgroundColor: colors,
-        borderRadius: 6,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#1E2B1A",
-          borderColor: "#2A3D24",
-          borderWidth: 1,
-          titleColor: "#4ADE80",
-          bodyColor: "#E8F0E4",
-          callbacks: {
-            label: ctx => ` ${ctx.parsed.y} report${ctx.parsed.y !== 1 ? "s" : ""}`
-          }
-        }
+    type:"bar",
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderRadius:6, borderSkipped:false }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:"#1E2B1A",borderColor:"#2A3D24",borderWidth:1,titleColor:"#4ADE80",bodyColor:"#E8F0E4",
+          callbacks:{label:ctx=>` ${ctx.parsed.y} report${ctx.parsed.y!==1?"s":""}`}}
       },
-      scales: {
-        x: {
-          grid: { color: "#1E2B1A" },
-          ticks: { color: "#7A9470", font: { family: "DM Sans", size: 11 } }
-        },
-        y: {
-          grid: { color: "#1E2B1A" },
-          ticks: {
-            color: "#7A9470",
-            font: { family: "DM Mono", size: 11 },
-            stepSize: 1,
-            precision: 0
-          },
-          beginAtZero: true,
-        }
+      scales:{
+        x:{grid:{color:"#1E2B1A"},ticks:{color:"#7A9470",font:{family:"DM Sans",size:11}}},
+        y:{grid:{color:"#1E2B1A"},ticks:{color:"#7A9470",font:{family:"DM Mono",size:11},stepSize:1,precision:0},beginAtZero:true}
       }
     }
   });
 }
 
-// ── TABLE ─────────────────────────────────────────────────────────────────────
-function renderTable(tbodyId, data) {
-  const tbody = document.getElementById(tbodyId);
-  tbody.innerHTML = "";
-  const entries = Object.entries(data);
-  const max = entries.length > 0 ? entries[0][1] : 1;
-
-  entries.forEach(([key, val], i) => {
-    const pct = Math.round((val / max) * 100);
-    let badge = `<span class="badge badge-green">${val}</span>`;
-    if (i === 0 && val > 1) badge = `<span class="badge badge-red">${val}</span>`;
-    else if (i === 1 && entries.length > 2) badge = `<span class="badge badge-yellow">${val}</span>`;
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${key}</td>
-        <td>${badge}</td>
-        <td class="bar-cell">
-          <div class="mini-bar-wrap">
-            <div class="mini-bar" style="width:${pct}%"></div>
-          </div>
-        </td>
-      </tr>`;
-  });
-
-  if (entries.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:2rem">No data yet</td></tr>`;
-  }
-}
-
-// ── TABS ──────────────────────────────────────────────────────────────────────
 function showTab(name, el) {
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
   el.classList.add("active");
-  document.getElementById("panel-" + name).classList.add("active");
+  document.getElementById("panel-"+name).classList.add("active");
 }
 
-// ── START ─────────────────────────────────────────────────────────────────────
 loadData();
