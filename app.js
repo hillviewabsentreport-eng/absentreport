@@ -72,102 +72,200 @@ const teachers = {
 };
 
 const days = ["Day 1","Day 2","Day 3","Day 4","Day 5","Day 6"];
-
 let state = { day:null, cls:null, period:null, teacher:null };
 let currentUser = null;
+let pendingReports = [];
 
-// ── AUTH HANDLING ────────────────────────────────────────────────────
-// Handle magic link return
+// ── MAGIC LINK RETURN ────────────────────────────────────────────────
 if (isSignInWithEmailLink(auth, window.location.href)) {
   let email = window.localStorage.getItem("emailForSignIn");
-  if (!email) {
-    email = window.prompt("Please confirm your email address:");
-  }
+  if (!email) email = window.prompt("Please confirm your email address:");
   signInWithEmailLink(auth, email, window.location.href)
     .then(() => {
       window.localStorage.removeItem("emailForSignIn");
-      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     })
-    .catch(err => {
-      showAuthMsg("Link expired or already used. Please request a new one.", "error");
-    });
+    .catch(() => showAuthMsg("Link expired or already used. Please request a new one.", "error"));
 }
 
-// Watch auth state
+// ── AUTH STATE ───────────────────────────────────────────────────────
 onAuthStateChanged(auth, user => {
   currentUser = user;
   if (user) {
-    // Signed in — show form
     document.getElementById("auth-screen").style.display = "none";
     document.getElementById("main-form").style.display = "block";
+    document.getElementById("tab-bar").style.display = "block";
     document.getElementById("user-pill").style.display = "flex";
     document.getElementById("signout-btn").style.display = "block";
-    document.getElementById("user-email-display").textContent = user.email;
+    document.getElementById("user-email-display").textContent = user.email || user.displayName || "Signed in";
     initForm();
+    loadPendingReports();
   } else {
-    // Not signed in — show auth
     document.getElementById("auth-screen").style.display = "block";
     document.getElementById("main-form").style.display = "none";
+    document.getElementById("tab-bar").style.display = "none";
     document.getElementById("user-pill").style.display = "none";
     document.getElementById("signout-btn").style.display = "none";
   }
 });
 
-// Send magic link
+// ── AUTH ACTIONS ─────────────────────────────────────────────────────
 window.sendLink = async function() {
   const email = document.getElementById("auth-email").value.trim();
-  if (!email || !email.includes("@")) {
-    showAuthMsg("Please enter a valid email address.", "error");
-    return;
-  }
+  if (!email || !email.includes("@")) { showAuthMsg("Please enter a valid email address.", "error"); return; }
   const btn = document.getElementById("auth-btn");
-  btn.disabled = true;
-  btn.textContent = "Sending…";
+  btn.disabled = true; btn.textContent = "Sending…";
   try {
     await sendSignInLinkToEmail(auth, email, ACTION_CODE_SETTINGS);
     window.localStorage.setItem("emailForSignIn", email);
     document.getElementById("auth-title").textContent = "Check your email";
-    document.getElementById("auth-sub").textContent = `We sent a magic link to ${email}. Click it to sign in — no password needed.`;
+    document.getElementById("auth-sub").textContent = `We sent a magic link to ${email}. Click it to sign in.`;
     document.getElementById("auth-email").style.display = "none";
-    btn.style.display = "none";
+    document.getElementById("auth-btn").style.display = "none";
     showAuthMsg("✓ Magic link sent! Check your inbox (and spam folder).", "success");
-  } catch (err) {
+  } catch(err) {
     showAuthMsg("Failed to send link: " + err.message, "error");
-    btn.disabled = false;
-    btn.textContent = "Send magic link";
+    btn.disabled = false; btn.textContent = "Send magic link";
   }
 };
 
 window.signInGoogle = async function() {
-  const googleBtn = document.getElementById("google-btn");
-  if (googleBtn) {
-    googleBtn.disabled = true;
-    googleBtn.textContent = "Signing in...";
-  }
-
+  const btn = document.getElementById("google-btn");
+  btn.disabled = true; btn.textContent = "Signing in…";
   try {
     await signInWithPopup(auth, googleProvider);
-  } catch (err) {
+  } catch(err) {
     showAuthMsg("Google sign-in failed: " + err.message, "error");
-  } finally {
-    if (googleBtn) {
-      googleBtn.disabled = false;
-      googleBtn.textContent = "Continue with Google";
-    }
+    btn.disabled = false; btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg> Continue with Google`;
   }
 };
 
-window.handleSignOut = function() {
-  signOut(auth);
-};
+window.handleSignOut = function() { signOut(auth); };
 
 function showAuthMsg(msg, type) {
   const el = document.getElementById("auth-msg");
-  el.textContent = msg;
-  el.className = "auth-msg " + type;
-  el.style.display = "block";
+  el.textContent = msg; el.className = "auth-msg " + type; el.style.display = "block";
 }
+
+// ── TAB SWITCHING ────────────────────────────────────────────────────
+window.switchTab = function(tab) {
+  document.getElementById("tab-report").classList.toggle("active", tab === "report");
+  document.getElementById("tab-approvals").classList.toggle("active", tab === "approvals");
+  document.getElementById("report-panel").style.display = tab === "report" ? "block" : "none";
+  document.getElementById("approvals-panel").style.display = tab === "approvals" ? "block" : "none";
+  if (tab === "approvals") loadPendingReports();
+};
+
+// ── LOAD PENDING REPORTS ─────────────────────────────────────────────
+async function loadPendingReports() {
+  const listEl = document.getElementById("approvals-list");
+  const loadingEl = document.getElementById("approvals-loading");
+  loadingEl.style.display = "block";
+  listEl.innerHTML = "";
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=getPending&t=" + Date.now());
+    const json = await res.json();
+    if (json.status !== "success") throw new Error(json.message);
+
+    const userEmail = currentUser?.email || "";
+
+    // Filter out reports submitted by current user
+    pendingReports = json.data.filter(r => {
+      const reporter = (r[6] || "").toLowerCase();
+      return reporter !== userEmail.toLowerCase();
+    });
+
+    // Update badge
+    const badge = document.getElementById("approval-badge");
+    if (pendingReports.length > 0) {
+      badge.textContent = pendingReports.length;
+      badge.classList.add("show");
+    } else {
+      badge.classList.remove("show");
+    }
+
+    loadingEl.style.display = "none";
+    renderApprovals(pendingReports);
+
+  } catch(err) {
+    loadingEl.textContent = "Could not load pending reports.";
+    console.error(err);
+  }
+}
+
+function renderApprovals(reports) {
+  const listEl = document.getElementById("approvals-list");
+  listEl.innerHTML = "";
+
+  if (reports.length === 0) {
+    listEl.innerHTML = `
+      <div class="approvals-empty">
+        <div class="empty-icon">✅</div>
+        <p>No pending reports to verify.<br>You're all caught up!</p>
+      </div>`;
+    return;
+  }
+
+  reports.forEach(row => {
+    // row: [0]ID [1]DateTime [2]Day [3]Class [4]Period [5]Teacher [6]ReportedBy [7]Status
+    const reportId = row[0];
+    const card = document.createElement("div");
+    card.className = "approval-card";
+    card.id = "card-" + reportId;
+    card.innerHTML = `
+      <div class="approval-meta">
+        <span class="approval-chip">${row[2]}</span>
+        <span class="approval-chip">Class ${row[3]}</span>
+        <span class="approval-chip">Period ${row[4]}</span>
+        <span class="approval-chip">${row[1]}</span>
+      </div>
+      <div class="approval-teacher">${row[5]}</div>
+      <div class="approval-reporter">Reported by ${row[6] || "anonymous"}</div>
+      <div class="approval-actions">
+        <button class="approval-btn confirm" onclick="verifyReport('${reportId}','CONFIRMED','card-${reportId}')">✓ Confirm absent</button>
+        <button class="approval-btn deny" onclick="verifyReport('${reportId}','DENIED','card-${reportId}')">✗ Deny — present</button>
+      </div>`;
+    listEl.appendChild(card);
+  });
+}
+
+// ── VERIFY REPORT ────────────────────────────────────────────────────
+window.verifyReport = async function(reportId, verdict, cardId) {
+  const card = document.getElementById(cardId);
+  const btns = card.querySelectorAll(".approval-btn");
+  btns.forEach(b => { b.disabled = true; });
+
+  const verifierEmail = currentUser?.email || "anonymous";
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "verify", reportId, verdict, verifierEmail }),
+    });
+
+    // Update UI
+    const actionsEl = card.querySelector(".approval-actions");
+    actionsEl.innerHTML = `
+      <div class="approval-done ${verdict === 'CONFIRMED' ? 'confirmed' : 'denied'}">
+        ${verdict === 'CONFIRMED' ? '✓ Confirmed — absence recorded' : '✗ Denied — marked as present'}
+      </div>`;
+
+    // Update badge count
+    pendingReports = pendingReports.filter(r => r[0] !== reportId);
+    const badge = document.getElementById("approval-badge");
+    if (pendingReports.length > 0) {
+      badge.textContent = pendingReports.length;
+    } else {
+      badge.classList.remove("show");
+    }
+
+  } catch(err) {
+    btns.forEach(b => { b.disabled = false; });
+    alert("Failed to submit. Please try again.");
+  }
+};
 
 // ── FORM INIT ─────────────────────────────────────────────────────────
 let formInited = false;
@@ -199,14 +297,13 @@ function initForm() {
   });
 }
 
-// ── SELECTION HANDLERS ────────────────────────────────────────────────
+// ── FORM SELECTION HANDLERS ───────────────────────────────────────────
 window.selectDay = function(day, el) {
   state = { day, cls:null, period:null, teacher:null };
   document.querySelectorAll("#day-chips .chip").forEach(c => c.classList.remove("selected"));
   el.classList.add("selected");
   document.getElementById("val-day").textContent = day;
   markDone("card-day");
-
   const cc = document.getElementById("class-chips");
   cc.innerHTML = "";
   allClasses.forEach(cls => {
@@ -215,7 +312,6 @@ window.selectDay = function(day, el) {
     c.onclick = () => selectClass(cls, c);
     cc.appendChild(c);
   });
-
   unlock("card-class"); lock("card-period"); lock("card-teacher");
   clearTeacher(); updateProgress(); checkSubmit();
 };
@@ -265,7 +361,6 @@ function clearTeacher() {
   document.getElementById("teacher-select").value = "";
 }
 
-// ── CARD STATE ────────────────────────────────────────────────────────
 function lock(id) { const c=document.getElementById(id); c.classList.add("locked"); c.classList.remove("done"); }
 function unlock(id) { document.getElementById(id).classList.remove("locked","done"); }
 function markDone(id) { const c=document.getElementById(id); c.classList.remove("locked"); c.classList.add("done"); }
@@ -280,7 +375,7 @@ function checkSubmit() {
   document.getElementById("submit-btn").disabled = !(state.day && state.cls && state.period && state.teacher);
 }
 
-// ── SUBMIT ────────────────────────────────────────────────────────────
+// ── SUBMIT REPORT ────────────────────────────────────────────────────
 window.submitReport = async function() {
   const btn = document.getElementById("submit-btn");
   document.getElementById("error-banner").style.display = "none";
@@ -288,6 +383,7 @@ window.submitReport = async function() {
   btn.innerHTML = '<span class="spinner"></span> Submitting…';
 
   const payload = {
+    action: "submit",
     day: state.day,
     class: state.cls,
     period: state.period,
@@ -303,8 +399,6 @@ window.submitReport = async function() {
       body: JSON.stringify(payload),
     });
 
-    // Hide form steps, show success
-    document.getElementById("form-area") && (document.getElementById("form-area").style.display = "none");
     document.querySelectorAll(".step-card,.progress-bar,.submit-btn,.error-banner")
       .forEach(el => el.style.display = "none");
     const time = new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});

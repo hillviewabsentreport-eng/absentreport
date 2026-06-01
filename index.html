@@ -7,128 +7,121 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F4F1EC;
-    --surface: #FDFCFA;
-    --border: #E2DDD6;
-    --text: #1A1714;
-    --muted: #7A746D;
-    --accent: #1B4332;
-    --accent-light: #D8F3DC;
-    --step-done: #40916C;
-    --danger: #9B1D20;
-    --warning-bg: #FFF8E7;
-    --warning-border: #F0C040;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --bg:#F4F1EC;--surface:#FDFCFA;--border:#E2DDD6;--text:#1A1714;
+    --muted:#7A746D;--accent:#1B4332;--accent-light:#D8F3DC;
+    --step-done:#40916C;--danger:#9B1D20;
+    --warning-bg:#FFF8E7;--warning-border:#F0C040;
+    --radius:12px;--radius-sm:8px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 4rem; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:4rem}
 
-  /* ── HEADER ── */
-  header {
-    background: var(--accent); color: white;
-    padding: 1.25rem 1.5rem;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .school-crest { width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px; }
-  .header-text h1 { font-size:15px;font-weight:600; }
-  .header-text p { font-size:12px;opacity:0.7;margin-top:1px; }
-  .header-right { margin-left:auto;display:flex;align-items:center;gap:8px; }
-  .user-pill { background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;display:none;align-items:center;gap:6px; }
-  .user-dot { width:6px;height:6px;border-radius:50%;background:#74C69D; }
-  .signout-btn { background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;display:none; }
-  .reports-link { display:flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,0.7);text-decoration:none;padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2); }
-  .reports-link:hover { color:white; }
+  header{background:var(--accent);color:white;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:12px}
+  .school-crest{width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .header-text h1{font-size:15px;font-weight:600}
+  .header-text p{font-size:12px;opacity:0.7;margin-top:1px}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .user-pill{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;display:none;align-items:center;gap:6px}
+  .user-dot{width:6px;height:6px;border-radius:50%;background:#74C69D}
+  .signout-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;display:none}
+  .reports-link{display:flex;align-items:center;gap:5px;font-size:12px;color:rgba(255,255,255,0.7);text-decoration:none;padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.2)}
+  .reports-link:hover{color:white}
 
-  /* ── AUTH SCREEN ── */
-  .auth-screen {
-    max-width:400px;margin:3rem auto;padding:0 1rem;
-  }
-  .auth-card {
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center;
-  }
-  .auth-logo { font-size:36px;margin-bottom:1rem; }
-  .auth-title { font-size:20px;font-weight:600;margin-bottom:6px; }
-  .auth-sub { font-size:14px;color:var(--muted);margin-bottom:1.5rem;line-height:1.5; }
-  .auth-input {
-    width:100%;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);
-    font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);margin-bottom:10px;
-  }
-  .auth-input:focus { outline:none;border-color:var(--accent); }
-  .auth-btn {
-    width:100%;padding:13px;border-radius:var(--radius);border:none;background:var(--accent);color:white;
-    font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity 0.2s;
-  }
-  .auth-btn.google {
-    margin-top:8px;
-    background:#FFFFFF;
-    color:#1A1714;
-    border:1px solid var(--border);
-  }
-  .auth-btn:disabled { opacity:0.4;cursor:not-allowed; }
-  .auth-btn:not(:disabled):hover { opacity:0.9; }
-  .auth-msg { font-size:13px;margin-top:12px;padding:10px;border-radius:var(--radius-sm);display:none; }
-  .auth-msg.success { background:var(--accent-light);color:var(--accent); }
-  .auth-msg.error { background:#FFF0F0;color:var(--danger); }
+  /* AUTH */
+  .auth-screen{max-width:400px;margin:3rem auto;padding:0 1rem}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center}
+  .auth-logo{font-size:36px;margin-bottom:1rem}
+  .auth-title{font-size:20px;font-weight:600;margin-bottom:6px}
+  .auth-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;line-height:1.5}
+  .auth-divider{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:var(--muted)}
+  .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .auth-input{width:100%;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);margin-bottom:10px}
+  .auth-input:focus{outline:none;border-color:var(--accent)}
+  .auth-btn{width:100%;padding:13px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity 0.2s}
+  .auth-btn.google{margin-top:8px;background:#fff;color:#1A1714;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:10px}
+  .auth-btn:disabled{opacity:0.4;cursor:not-allowed}
+  .auth-btn:not(:disabled):hover{opacity:0.9}
+  .auth-msg{font-size:13px;margin-top:12px;padding:10px;border-radius:var(--radius-sm);display:none}
+  .auth-msg.success{background:var(--accent-light);color:var(--accent)}
+  .auth-msg.error{background:#FFF0F0;color:var(--danger)}
 
-  /* ── MAIN FORM ── */
-  main { max-width:480px;margin:0 auto;padding:1.5rem 1rem;display:none; }
-  .progress-bar { display:flex;gap:4px;margin-bottom:1.5rem; }
-  .progress-seg { flex:1;height:3px;border-radius:2px;background:var(--border);transition:background 0.3s; }
-  .progress-seg.done { background:var(--step-done); }
+  /* TAB BAR */
+  .tab-bar{max-width:480px;margin:1.25rem auto 0;padding:0 1rem;display:none}
+  .tab-bar-inner{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px}
+  .tab-btn{flex:1;padding:9px 8px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+  .tab-btn.active{background:var(--accent);color:white}
+  .badge-count{background:#E53E3E;color:white;border-radius:20px;font-size:10px;font-weight:600;padding:1px 6px;line-height:1.6;display:none}
+  .badge-count.show{display:inline-block}
 
-  .step-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:10px;transition:opacity 0.2s; }
-  .step-card.locked { opacity:0.45;pointer-events:none; }
-  .step-card.done { border-color:var(--step-done);background:#F0FAF4; }
-  .step-header { display:flex;align-items:center;gap:10px;margin-bottom:14px; }
-  .step-num { width:22px;height:22px;border-radius:50%;background:var(--accent);color:white;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-  .step-card.done .step-num { background:var(--step-done); }
-  .step-label { font-size:14px;font-weight:600;flex:1; }
-  .step-value { font-family:'DM Mono',monospace;font-size:12px;color:var(--step-done);font-weight:500; }
+  /* MAIN FORM */
+  main{max-width:480px;margin:0 auto;padding:1rem 1rem;display:none}
+  .progress-bar{display:flex;gap:4px;margin-bottom:1.5rem}
+  .progress-seg{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background 0.3s}
+  .progress-seg.done{background:var(--step-done)}
+  .step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:10px;transition:opacity 0.2s}
+  .step-card.locked{opacity:0.45;pointer-events:none}
+  .step-card.done{border-color:var(--step-done);background:#F0FAF4}
+  .step-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:white;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step-card.done .step-num{background:var(--step-done)}
+  .step-label{font-size:14px;font-weight:600;flex:1}
+  .step-value{font-family:'DM Mono',monospace;font-size:12px;color:var(--step-done);font-weight:500}
+  .chip-grid{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--text);transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  .chip.selected{background:var(--accent);color:white;border-color:var(--accent)}
+  .period-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+  .p-btn{aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text);transition:all 0.15s;display:flex;align-items:center;justify-content:center}
+  .p-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .p-btn.selected{background:var(--accent);color:white;border-color:var(--accent)}
+  .teacher-card{display:flex;align-items:center;gap:12px;background:var(--accent-light);border:1px solid #95D5B2;border-radius:var(--radius-sm);padding:12px;margin-bottom:12px}
+  .teacher-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0}
+  .teacher-name{font-size:15px;font-weight:600}
+  .teacher-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .override-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
+  select{width:100%;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A746D' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
+  select:focus{outline:none;border-color:var(--accent)}
+  .submit-btn{width:100%;padding:14px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:6px;transition:opacity 0.2s,transform 0.1s}
+  .submit-btn:disabled{opacity:0.35;cursor:not-allowed}
+  .submit-btn:not(:disabled):hover{opacity:0.9}
+  .submit-btn:not(:disabled):active{transform:scale(0.98)}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-banner{display:none;background:#FFF0F0;border:1px solid #F5C0C0;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--danger);margin-top:8px}
+  .success-screen{display:none;text-align:center;padding:2rem 1rem}
+  .success-icon{width:64px;height:64px;border-radius:50%;background:var(--accent-light);border:2px solid var(--step-done);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:28px}
+  .success-title{font-size:20px;font-weight:600;margin-bottom:6px}
+  .success-sub{font-size:14px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6}
+  .summary-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;text-align:left;margin-bottom:1.25rem}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .summary-row:last-child{border-bottom:none}
+  .summary-key{color:var(--muted)}
+  .summary-val{font-weight:500;font-family:'DM Mono',monospace;font-size:12px}
+  .reset-btn{padding:10px 24px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--text);transition:all 0.15s}
+  .reset-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .pending-badge{display:inline-flex;align-items:center;gap:6px;background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500;color:#7A5F00;margin-bottom:1rem}
 
-  .chip-grid { display:flex;flex-wrap:wrap;gap:7px; }
-  .chip { padding:7px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--text);transition:all 0.15s;font-family:'DM Sans',sans-serif; }
-  .chip:hover { border-color:var(--accent);color:var(--accent); }
-  .chip.selected { background:var(--accent);color:white;border-color:var(--accent); }
-
-  .period-grid { display:grid;grid-template-columns:repeat(8,1fr);gap:6px; }
-  .p-btn { aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text);transition:all 0.15s;display:flex;align-items:center;justify-content:center; }
-  .p-btn:hover { border-color:var(--accent);color:var(--accent); }
-  .p-btn.selected { background:var(--accent);color:white;border-color:var(--accent); }
-
-  .teacher-card { display:flex;align-items:center;gap:12px;background:var(--accent-light);border:1px solid #95D5B2;border-radius:var(--radius-sm);padding:12px;margin-bottom:12px; }
-  .teacher-avatar { width:40px;height:40px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0; }
-  .teacher-name { font-size:15px;font-weight:600; }
-  .teacher-sub { font-size:12px;color:var(--muted);margin-top:2px; }
-  .override-label { font-size:12px;color:var(--muted);margin-bottom:6px;display:block; }
-
-  select { width:100%;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A746D' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer; }
-  select:focus { outline:none;border-color:var(--accent); }
-
-  .submit-btn { width:100%;padding:14px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:6px;transition:opacity 0.2s,transform 0.1s; }
-  .submit-btn:disabled { opacity:0.35;cursor:not-allowed; }
-  .submit-btn:not(:disabled):hover { opacity:0.9; }
-  .submit-btn:not(:disabled):active { transform:scale(0.98); }
-
-  .spinner { display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-
-  .error-banner { display:none;background:#FFF0F0;border:1px solid #F5C0C0;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--danger);margin-top:8px; }
-
-  /* ── SUCCESS ── */
-  .success-screen { display:none;text-align:center;padding:2rem 1rem; }
-  .success-icon { width:64px;height:64px;border-radius:50%;background:var(--accent-light);border:2px solid var(--step-done);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:28px; }
-  .success-title { font-size:20px;font-weight:600;margin-bottom:6px; }
-  .success-sub { font-size:14px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6; }
-  .summary-box { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;text-align:left;margin-bottom:1.25rem; }
-  .summary-row { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px; }
-  .summary-row:last-child { border-bottom:none; }
-  .summary-key { color:var(--muted); }
-  .summary-val { font-weight:500;font-family:'DM Mono',monospace;font-size:12px; }
-  .reset-btn { padding:10px 24px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--text);transition:all 0.15s; }
-  .reset-btn:hover { border-color:var(--accent);color:var(--accent); }
-
-  .pending-badge { display:inline-flex;align-items:center;gap:6px;background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500;color:#7A5F00;margin-bottom:1rem; }
+  /* APPROVALS PANEL */
+  .approvals-panel{display:none;padding:0}
+  .approvals-empty{text-align:center;padding:3rem 1rem;color:var(--muted)}
+  .approvals-empty .empty-icon{font-size:36px;margin-bottom:10px}
+  .approvals-empty p{font-size:14px}
+  .approval-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:10px}
+  .approval-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .approval-chip{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500;color:var(--muted);font-family:'DM Mono',monospace}
+  .approval-teacher{font-size:17px;font-weight:600;margin-bottom:4px}
+  .approval-reporter{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .approval-actions{display:flex;gap:8px}
+  .approval-btn{flex:1;padding:11px;border-radius:var(--radius-sm);border:none;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s}
+  .approval-btn.confirm{background:var(--accent-light);color:var(--accent);border:1px solid #95D5B2}
+  .approval-btn.confirm:hover{background:#b7e4c7}
+  .approval-btn.deny{background:#FFF0F0;color:var(--danger);border:1px solid #F5C0C0}
+  .approval-btn.deny:hover{background:#ffd6d6}
+  .approval-btn:disabled{opacity:0.4;cursor:not-allowed}
+  .approval-done{text-align:center;padding:10px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;margin-top:4px}
+  .approval-done.confirmed{background:var(--accent-light);color:var(--accent)}
+  .approval-done.denied{background:#FFF0F0;color:var(--danger)}
+  .approvals-loading{text-align:center;padding:2rem;color:var(--muted);font-size:14px}
 </style>
 </head>
 <body>
@@ -151,74 +144,84 @@
   <div class="auth-card">
     <div class="auth-logo">🔐</div>
     <div class="auth-title" id="auth-title">Sign in to report</div>
-    <div class="auth-sub" id="auth-sub">Enter your email and we'll send you a magic link — no password needed.</div>
+    <div class="auth-sub" id="auth-sub">Use your Google account or enter your email for a magic link.</div>
+    <button class="auth-btn google" id="google-btn" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-divider">or</div>
     <input class="auth-input" type="email" id="auth-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendLink()">
     <button class="auth-btn" id="auth-btn" onclick="sendLink()">Send magic link</button>
-    <button class="auth-btn google" id="google-btn" onclick="signInGoogle()">Continue with Google</button>
     <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- TAB BAR (shown after login) -->
+<div class="tab-bar" id="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab-btn active" id="tab-report" onclick="switchTab('report')">📝 Report Absence</button>
+    <button class="tab-btn" id="tab-approvals" onclick="switchTab('approvals')">
+      ✅ Approvals
+      <span class="badge-count" id="approval-badge">0</span>
+    </button>
   </div>
 </div>
 
 <!-- MAIN FORM -->
 <main id="main-form">
-  <div class="progress-bar">
-    <div class="progress-seg" id="seg1"></div>
-    <div class="progress-seg" id="seg2"></div>
-    <div class="progress-seg" id="seg3"></div>
-    <div class="progress-seg" id="seg4"></div>
-  </div>
 
-  <div class="step-card" id="card-day">
-    <div class="step-header">
-      <div class="step-num">1</div>
-      <div class="step-label">Which day is it?</div>
-      <div class="step-value" id="val-day"></div>
+  <!-- REPORT TAB -->
+  <div id="report-panel">
+    <div class="progress-bar">
+      <div class="progress-seg" id="seg1"></div>
+      <div class="progress-seg" id="seg2"></div>
+      <div class="progress-seg" id="seg3"></div>
+      <div class="progress-seg" id="seg4"></div>
     </div>
-    <div class="chip-grid" id="day-chips"></div>
-  </div>
 
-  <div class="step-card locked" id="card-class">
-    <div class="step-header">
-      <div class="step-num">2</div>
-      <div class="step-label">Which class?</div>
-      <div class="step-value" id="val-class"></div>
+    <div class="step-card" id="card-day">
+      <div class="step-header"><div class="step-num">1</div><div class="step-label">Which day is it?</div><div class="step-value" id="val-day"></div></div>
+      <div class="chip-grid" id="day-chips"></div>
     </div>
-    <div class="chip-grid" id="class-chips"></div>
-  </div>
 
-  <div class="step-card locked" id="card-period">
-    <div class="step-header">
-      <div class="step-num">3</div>
-      <div class="step-label">Which period?</div>
-      <div class="step-value" id="val-period"></div>
+    <div class="step-card locked" id="card-class">
+      <div class="step-header"><div class="step-num">2</div><div class="step-label">Which class?</div><div class="step-value" id="val-class"></div></div>
+      <div class="chip-grid" id="class-chips"></div>
     </div>
-    <div class="period-grid" id="period-btns"></div>
-  </div>
 
-  <div class="step-card locked" id="card-teacher">
-    <div class="step-header">
-      <div class="step-num">4</div>
-      <div class="step-label">Confirm the teacher</div>
+    <div class="step-card locked" id="card-period">
+      <div class="step-header"><div class="step-num">3</div><div class="step-label">Which period?</div><div class="step-value" id="val-period"></div></div>
+      <div class="period-grid" id="period-btns"></div>
     </div>
-    <div id="teacher-display"></div>
-    <span class="override-label">Not correct? Select the right teacher:</span>
-    <select id="teacher-select" onchange="overrideTeacher(this.value)">
-      <option value="">— Use auto-suggested teacher —</option>
-    </select>
+
+    <div class="step-card locked" id="card-teacher">
+      <div class="step-header"><div class="step-num">4</div><div class="step-label">Confirm the teacher</div></div>
+      <div id="teacher-display"></div>
+      <span class="override-label">Not correct? Select the right teacher:</span>
+      <select id="teacher-select" onchange="overrideTeacher(this.value)">
+        <option value="">— Use auto-suggested teacher —</option>
+      </select>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitReport()">Submit absence report</button>
+    <div class="error-banner" id="error-banner">Failed to submit. Please check your connection and try again.</div>
+
+    <div class="success-screen" id="success-screen">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Report submitted</div>
+      <div class="pending-badge">⏳ Awaiting peer verification</div>
+      <div class="success-sub">Your report has been sent for verification. Class overseers will be notified to confirm.</div>
+      <div class="summary-box" id="summary-box"></div>
+      <button class="reset-btn" onclick="resetForm()">Report another absence</button>
+    </div>
   </div>
 
-  <button class="submit-btn" id="submit-btn" disabled onclick="submitReport()">Submit absence report</button>
-  <div class="error-banner" id="error-banner">Failed to submit. Please check your connection and try again.</div>
-
-  <!-- Success -->
-  <div class="success-screen" id="success-screen">
-    <div class="success-icon">✓</div>
-    <div class="success-title">Report submitted</div>
-    <div class="pending-badge">⏳ Awaiting peer verification</div>
-    <div class="success-sub">Your report has been sent for verification. Staff will be notified by email to confirm.</div>
-    <div class="summary-box" id="summary-box"></div>
-    <button class="reset-btn" onclick="resetForm()">Report another absence</button>
+  <!-- APPROVALS TAB -->
+  <div class="approvals-panel" id="approvals-panel">
+    <div class="approvals-loading" id="approvals-loading">Loading pending reports…</div>
+    <div id="approvals-list"></div>
   </div>
+
 </main>
 
 <script type="module" src="app.js"></script>
