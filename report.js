@@ -160,7 +160,7 @@ function renderLog(rows) {
 function renderChart(canvasId, data, isDay) {
   const labels = Object.keys(data);
   const values = Object.values(data);
-  const greens = ["#4ADE80","#34D399","#6EE7B7","#86EFAC","#A7F3D0","#D1FAE5"];
+  const greens = ["#1E4636","#2D6A4F","#4D7C5A","#B8954A","#C2410C","#8A938C"];
   const colors = labels.map((_,i) => greens[i % greens.length]);
   if (charts[canvasId]) charts[canvasId].destroy();
   const ctx = document.getElementById(canvasId).getContext("2d");
@@ -171,12 +171,12 @@ function renderChart(canvasId, data, isDay) {
       responsive:true, maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
-        tooltip:{backgroundColor:"#1E2B1A",borderColor:"#2A3D24",borderWidth:1,titleColor:"#4ADE80",bodyColor:"#E8F0E4",
+        tooltip:{backgroundColor:"#1A2420",borderColor:"#1E4636",borderWidth:1,titleColor:"#B8954A",bodyColor:"#FBF9F4",padding:10,cornerRadius:8,
           callbacks:{label:ctx=>` ${ctx.parsed.y} report${ctx.parsed.y!==1?"s":""}`}}
       },
       scales:{
-        x:{grid:{color:"#1E2B1A"},ticks:{color:"#7A9470",font:{family:"DM Sans",size:11}}},
-        y:{grid:{color:"#1E2B1A"},ticks:{color:"#7A9470",font:{family:"DM Mono",size:11},stepSize:1,precision:0},beginAtZero:true}
+        x:{grid:{display:false},ticks:{color:"#8A938C",font:{family:"Libre Franklin",size:11,weight:"600"}}},
+        y:{grid:{color:"rgba(26,36,32,0.06)"},ticks:{color:"#8A938C",font:{family:"Libre Franklin",size:11},stepSize:1,precision:0},beginAtZero:true}
       }
     }
   });
