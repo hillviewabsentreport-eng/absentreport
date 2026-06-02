@@ -1,15 +1,6 @@
-import {
-  auth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  signInWithPopup,
-  googleProvider,
-  onAuthStateChanged,
-  signOut,
-  ACTION_CODE_SETTINGS,
-  APPS_SCRIPT_URL
-} from "./firebase.js";
+// ── CONFIGURATION ──────────────────────────────────────────────────
+const APPS_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+// ───────────────────────────────────────────────────────────────────
 
 // ── TIMETABLE DATA ──────────────────────────────────────────────────
 const timetable = {
@@ -72,117 +63,146 @@ const teachers = {
 };
 
 const days = ["Day 1","Day 2","Day 3","Day 4","Day 5","Day 6"];
+
+// ── STATE ────────────────────────────────────────────────────────────
 let state = { day:null, cls:null, period:null, teacher:null };
-let currentUser = null;
+let currentRole = null;
 let pendingReports = [];
+let passTarget = null; // which password being changed: 'admin' | 'user'
 
-// ── MAGIC LINK RETURN ────────────────────────────────────────────────
-if (isSignInWithEmailLink(auth, window.location.href)) {
-  let email = window.localStorage.getItem("emailForSignIn");
-  if (!email) email = window.prompt("Please confirm your email address:");
-  signInWithEmailLink(auth, email, window.location.href)
-    .then(() => {
-      window.localStorage.removeItem("emailForSignIn");
-      window.history.replaceState({}, document.title, window.location.pathname);
-    })
-    .catch(() => showAuthMsg("Link expired or already used. Please request a new one.", "error"));
+// ── SESSION ──────────────────────────────────────────────────────────
+function getSession() {
+  return sessionStorage.getItem("hc_role");
+}
+function setSession(role) {
+  sessionStorage.setItem("hc_role", role);
+}
+function clearSession() {
+  sessionStorage.removeItem("hc_role");
 }
 
-// ── AUTH STATE ───────────────────────────────────────────────────────
-onAuthStateChanged(auth, user => {
-  currentUser = user;
-  if (user) {
-    document.getElementById("auth-screen").style.display = "none";
-    document.getElementById("main-form").style.display = "block";
-    document.getElementById("tab-bar").style.display = "block";
-    document.getElementById("user-pill").style.display = "flex";
-    document.getElementById("signout-btn").style.display = "block";
-    document.getElementById("user-email-display").textContent = user.email || user.displayName || "Signed in";
-    initForm();
-    loadPendingReports();
-  } else {
-    document.getElementById("auth-screen").style.display = "block";
-    document.getElementById("main-form").style.display = "none";
-    document.getElementById("tab-bar").style.display = "none";
-    document.getElementById("user-pill").style.display = "none";
-    document.getElementById("signout-btn").style.display = "none";
+// ── BOOT ─────────────────────────────────────────────────────────────
+(function boot() {
+  const saved = getSession();
+  if (saved) {
+    showApp(saved);
   }
-});
+})();
 
-// ── AUTH ACTIONS ─────────────────────────────────────────────────────
-window.sendLink = async function() {
-  const email = document.getElementById("auth-email").value.trim();
-  if (!email || !email.includes("@")) { showAuthMsg("Please enter a valid email address.", "error"); return; }
-  const btn = document.getElementById("auth-btn");
-  btn.disabled = true; btn.textContent = "Sending…";
+// ── ROLE SELECTOR ────────────────────────────────────────────────────
+let selectedRole = "user";
+window.selectRole = function(role) {
+  selectedRole = role;
+  document.getElementById("role-user").classList.toggle("selected", role === "user");
+  document.getElementById("role-admin").classList.toggle("selected", role === "admin");
+  document.getElementById("pass-input").value = "";
+  document.getElementById("pass-input").focus();
+};
+
+// ── LOGIN ─────────────────────────────────────────────────────────────
+window.doLogin = async function() {
+  const password = document.getElementById("pass-input").value.trim();
+  if (!password) return;
+
+  const btn = document.getElementById("login-btn");
+  btn.disabled = true;
+  btn.textContent = "Signing in…";
+  document.getElementById("login-err").style.display = "none";
+
   try {
-    await sendSignInLinkToEmail(auth, email, ACTION_CODE_SETTINGS);
-    window.localStorage.setItem("emailForSignIn", email);
-    document.getElementById("auth-title").textContent = "Check your email";
-    document.getElementById("auth-sub").textContent = `We sent a magic link to ${email}. Click it to sign in.`;
-    document.getElementById("auth-email").style.display = "none";
-    document.getElementById("auth-btn").style.display = "none";
-    showAuthMsg("✓ Magic link sent! Check your inbox (and spam folder).", "success");
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=validatePassword&role=" + selectedRole + "&pass=" + encodeURIComponent(password) + "&t=" + Date.now());
+    const json = await res.json();
+
+    if (json.status === "success") {
+      setSession(selectedRole);
+      showApp(selectedRole);
+    } else {
+      document.getElementById("login-err").style.display = "block";
+    }
   } catch(err) {
-    showAuthMsg("Failed to send link: " + err.message, "error");
-    btn.disabled = false; btn.textContent = "Send magic link";
+    document.getElementById("login-err").textContent = "Connection error. Check your internet.";
+    document.getElementById("login-err").style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sign In";
+    document.getElementById("pass-input").value = "";
   }
 };
 
-window.signInGoogle = async function() {
-  const btn = document.getElementById("google-btn");
-  btn.disabled = true; btn.textContent = "Signing in…";
-  try {
-    await signInWithPopup(auth, googleProvider);
-  } catch(err) {
-    showAuthMsg("Google sign-in failed: " + err.message, "error");
-    btn.disabled = false; btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg> Continue with Google`;
-  }
-};
+// ── SHOW APP ──────────────────────────────────────────────────────────
+function showApp(role) {
+  currentRole = role;
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app").style.display = "block";
 
-window.handleSignOut = function() { signOut(auth); };
+  const tag = document.getElementById("role-tag");
+  tag.textContent = role === "admin" ? "Admin" : "Reporter";
+  tag.className = "user-tag" + (role === "admin" ? " admin" : "");
 
-function showAuthMsg(msg, type) {
-  const el = document.getElementById("auth-msg");
-  el.textContent = msg; el.className = "auth-msg " + type; el.style.display = "block";
+  // Show admin tab only for admins
+  document.getElementById("tab-admin").style.display = role === "admin" ? "flex" : "none";
+
+  initForm();
+  loadPendingReports();
 }
 
-// ── TAB SWITCHING ────────────────────────────────────────────────────
+window.doSignOut = function() {
+  clearSession();
+  currentRole = null;
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("app").style.display = "none";
+  selectedRole = "user";
+  document.getElementById("role-user").classList.add("selected");
+  document.getElementById("role-admin").classList.remove("selected");
+};
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────
 window.switchTab = function(tab) {
-  document.getElementById("tab-report").classList.toggle("active", tab === "report");
-  document.getElementById("tab-approvals").classList.toggle("active", tab === "approvals");
-  document.getElementById("report-panel").style.display = tab === "report" ? "block" : "none";
-  document.getElementById("approvals-panel").style.display = tab === "approvals" ? "block" : "none";
+  ["report","approvals","admin"].forEach(t => {
+    document.getElementById("tab-" + t)?.classList.toggle("active", t === tab);
+    document.getElementById("panel-" + t)?.classList.toggle("active", t === tab);
+  });
   if (tab === "approvals") loadPendingReports();
+  if (tab === "admin")     loadAdminPanel();
 };
 
-// ── LOAD PENDING REPORTS ─────────────────────────────────────────────
+// ── PENDING REPORTS ───────────────────────────────────────────────────
 async function loadPendingReports() {
-  const listEl = document.getElementById("approvals-list");
-  const loadingEl = document.getElementById("approvals-loading");
+  const listEl    = document.getElementById("ap-list");
+  const loadingEl = document.getElementById("ap-loading");
+  const heroEl    = document.getElementById("approvals-hero");
+  const hdrEl     = document.getElementById("ap-section-hdr");
+
   loadingEl.style.display = "block";
   listEl.innerHTML = "";
+  heroEl.style.display = "none";
+  hdrEl.style.display = "none";
 
   try {
     const res  = await fetch(APPS_SCRIPT_URL + "?action=getPending&t=" + Date.now());
     const json = await res.json();
     if (json.status !== "success") throw new Error(json.message);
 
-    const userEmail = currentUser?.email || "";
+    // Everyone can approve — no self-filter needed (no individual identity)
+    pendingReports = json.data;
 
-    // Filter out reports submitted by current user
-    pendingReports = json.data.filter(r => {
-      const reporter = (r[6] || "").toLowerCase();
-      return reporter !== userEmail.toLowerCase();
-    });
+    // Update badge + alert banner
+    const count = pendingReports.length;
+    const badge = document.getElementById("tab-badge");
+    const alert = document.getElementById("approval-alert");
+    const alertCount = document.getElementById("alert-count");
 
-    // Update badge
-    const badge = document.getElementById("approval-badge");
-    if (pendingReports.length > 0) {
-      badge.textContent = pendingReports.length;
+    if (count > 0) {
+      badge.textContent = count;
       badge.classList.add("show");
+      alertCount.textContent = count;
+      alert.style.display = "flex";
+      heroEl.style.display = "block";
+      document.getElementById("hero-count").textContent = count;
+      hdrEl.style.display = "block";
     } else {
       badge.classList.remove("show");
+      alert.style.display = "none";
     }
 
     loadingEl.style.display = "none";
@@ -195,79 +215,204 @@ async function loadPendingReports() {
 }
 
 function renderApprovals(reports) {
-  const listEl = document.getElementById("approvals-list");
+  const listEl = document.getElementById("ap-list");
   listEl.innerHTML = "";
 
   if (reports.length === 0) {
     listEl.innerHTML = `
-      <div class="approvals-empty">
-        <div class="empty-icon">✅</div>
-        <p>No pending reports to verify.<br>You're all caught up!</p>
+      <div class="ap-empty">
+        <div class="ap-empty-icon">✅</div>
+        <p><strong>All clear!</strong><br>No pending reports to verify right now.</p>
       </div>`;
     return;
   }
 
   reports.forEach(row => {
-    // row: [0]ID [1]DateTime [2]Day [3]Class [4]Period [5]Teacher [6]ReportedBy [7]Status
     const reportId = row[0];
     const card = document.createElement("div");
     card.className = "approval-card";
-    card.id = "card-" + reportId;
+    card.id = "apc-" + reportId;
     card.innerHTML = `
-      <div class="approval-meta">
-        <span class="approval-chip">${row[2]}</span>
-        <span class="approval-chip">Class ${row[3]}</span>
-        <span class="approval-chip">Period ${row[4]}</span>
-        <span class="approval-chip">${row[1]}</span>
+      <div class="apc-top">
+        <div class="apc-chips">
+          <span class="apc-chip">${row[2]}</span>
+          <span class="apc-chip">Class ${row[3]}</span>
+          <span class="apc-chip">Period ${row[4]}</span>
+          <span class="apc-chip">${row[1]}</span>
+        </div>
+        <div class="apc-teacher">${row[5]}</div>
+        <div class="apc-reporter">Reported anonymously · ${row[1]}</div>
       </div>
-      <div class="approval-teacher">${row[5]}</div>
-      <div class="approval-reporter">Reported by ${row[6] || "anonymous"}</div>
-      <div class="approval-actions">
-        <button class="approval-btn confirm" onclick="verifyReport('${reportId}','CONFIRMED','card-${reportId}')">✓ Confirm absent</button>
-        <button class="approval-btn deny" onclick="verifyReport('${reportId}','DENIED','card-${reportId}')">✗ Deny — present</button>
+      <div class="apc-actions">
+        <button class="apc-btn" onclick="verifyReport('${reportId}','CONFIRMED')">✓ Confirm absent</button>
+        <button class="apc-btn" onclick="verifyReport('${reportId}','DENIED')">✗ Present</button>
       </div>`;
     listEl.appendChild(card);
   });
 }
 
-// ── VERIFY REPORT ────────────────────────────────────────────────────
-window.verifyReport = async function(reportId, verdict, cardId) {
-  const card = document.getElementById(cardId);
-  const btns = card.querySelectorAll(".approval-btn");
-  btns.forEach(b => { b.disabled = true; });
-
-  const verifierEmail = currentUser?.email || "anonymous";
+window.verifyReport = async function(reportId, verdict) {
+  const card = document.getElementById("apc-" + reportId);
+  card.querySelectorAll(".apc-btn").forEach(b => b.disabled = true);
 
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST", mode: "no-cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "verify", reportId, verdict, verifierEmail }),
+      body: JSON.stringify({ action:"verify", reportId, verdict, verifierEmail: "app-" + currentRole }),
     });
 
-    // Update UI
-    const actionsEl = card.querySelector(".approval-actions");
-    actionsEl.innerHTML = `
-      <div class="approval-done ${verdict === 'CONFIRMED' ? 'confirmed' : 'denied'}">
-        ${verdict === 'CONFIRMED' ? '✓ Confirmed — absence recorded' : '✗ Denied — marked as present'}
-      </div>`;
+    const actionsEl = card.querySelector(".apc-actions");
+    actionsEl.outerHTML = `<div class="apc-done ${verdict === 'CONFIRMED' ? 'confirmed' : 'denied'}">
+      ${verdict === 'CONFIRMED' ? '✓ Confirmed — absence recorded' : '✗ Denied — teacher marked present'}
+    </div>`;
 
-    // Update badge count
     pendingReports = pendingReports.filter(r => r[0] !== reportId);
-    const badge = document.getElementById("approval-badge");
-    if (pendingReports.length > 0) {
-      badge.textContent = pendingReports.length;
+    const count = pendingReports.length;
+    const badge = document.getElementById("tab-badge");
+    const alert = document.getElementById("approval-alert");
+    const heroEl = document.getElementById("approvals-hero");
+    const hdrEl  = document.getElementById("ap-section-hdr");
+
+    if (count > 0) {
+      badge.textContent = count;
+      document.getElementById("alert-count").textContent = count;
+      document.getElementById("hero-count").textContent = count;
     } else {
       badge.classList.remove("show");
+      alert.style.display = "none";
+      heroEl.style.display = "none";
+      hdrEl.style.display = "none";
+      document.getElementById("ap-list").innerHTML = `
+        <div class="ap-empty"><div class="ap-empty-icon">✅</div>
+        <p><strong>All done!</strong><br>No more pending reports.</p></div>`;
     }
 
+    showToast(verdict === 'CONFIRMED' ? '✓ Absence confirmed' : '✗ Report denied');
+
   } catch(err) {
-    btns.forEach(b => { b.disabled = false; });
-    alert("Failed to submit. Please try again.");
+    card.querySelectorAll(".apc-btn").forEach(b => b.disabled = false);
+    showToast('Failed — please try again');
   }
 };
 
-// ── FORM INIT ─────────────────────────────────────────────────────────
+// ── ADMIN PANEL ────────────────────────────────────────────────────────
+async function loadAdminPanel() {
+  const listEl = document.getElementById("verifiers-list");
+  listEl.innerHTML = '<div style="padding:14px 16px;color:var(--text3);font-size:14px">Loading…</div>';
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + "?action=getVerifiers&t=" + Date.now());
+    const json = await res.json();
+    if (json.status !== "success") throw new Error(json.message);
+
+    renderVerifiers(json.data);
+  } catch(err) {
+    listEl.innerHTML = '<div style="padding:14px 16px;color:var(--red);font-size:13px">Could not load overseers.</div>';
+  }
+}
+
+function renderVerifiers(verifiers) {
+  const listEl = document.getElementById("verifiers-list");
+  if (!verifiers || verifiers.length === 0) {
+    listEl.innerHTML = '<div style="padding:14px 16px;color:var(--text3);font-size:14px">No overseers yet. Add one below.</div>';
+    return;
+  }
+  listEl.innerHTML = verifiers.map((v, i) => {
+    const isActive = (v[2] || "").toString().toLowerCase() === "yes";
+    return `
+    <div class="admin-row" id="vrow-${i}">
+      <div class="admin-row-icon ${isActive ? 'green' : 'orange'}">👤</div>
+      <div class="admin-row-body">
+        <div class="admin-row-label">${v[1] || v[0]}</div>
+        <div class="admin-row-sub">${v[0]}</div>
+      </div>
+      <button class="toggle ${isActive ? 'on' : ''}" onclick="toggleVerifier(${i},'${v[0]}','${isActive ? 'No' : 'Yes'}')"></button>
+    </div>`;
+  }).join("");
+}
+
+window.toggleVerifier = async function(idx, email, newStatus) {
+  const btn = document.querySelector(`#vrow-${idx} .toggle`);
+  if (btn) btn.style.opacity = "0.5";
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"updateVerifier", email, active: newStatus }),
+    });
+    showToast(newStatus === 'Yes' ? '✓ Overseer activated' : 'Overseer deactivated');
+    setTimeout(loadAdminPanel, 600);
+  } catch(err) {
+    showToast('Failed to update');
+    if (btn) btn.style.opacity = "1";
+  }
+};
+
+window.toggleAddForm = function() {
+  const form = document.getElementById("add-form");
+  form.classList.toggle("open");
+  if (form.classList.contains("open")) {
+    document.getElementById("new-name").focus();
+  }
+};
+
+window.addVerifier = async function() {
+  const name  = document.getElementById("new-name").value.trim();
+  const email = document.getElementById("new-email").value.trim();
+  if (!name || !email || !email.includes("@")) {
+    showToast("Please enter a valid name and email"); return;
+  }
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"addVerifier", name, email }),
+    });
+    document.getElementById("new-name").value = "";
+    document.getElementById("new-email").value = "";
+    document.getElementById("add-form").classList.remove("open");
+    showToast("✓ Overseer added");
+    setTimeout(loadAdminPanel, 800);
+  } catch(err) {
+    showToast("Failed to add overseer");
+  }
+};
+
+window.togglePassForm = function(target) {
+  passTarget = target;
+  const form = document.getElementById("pass-form");
+  document.getElementById("pass-form-label").textContent = "New " + target + " password";
+  document.getElementById("new-pass").value = "";
+  document.getElementById("confirm-pass").value = "";
+  form.classList.toggle("open");
+  if (form.classList.contains("open")) document.getElementById("new-pass").focus();
+};
+
+window.closePassForm = function() {
+  document.getElementById("pass-form").classList.remove("open");
+};
+
+window.changePassword = async function() {
+  const np = document.getElementById("new-pass").value.trim();
+  const cp = document.getElementById("confirm-pass").value.trim();
+  if (!np || np.length < 6) { showToast("Password must be at least 6 characters"); return; }
+  if (np !== cp)             { showToast("Passwords don't match"); return; }
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ action:"changePassword", role: passTarget, password: np }),
+    });
+    closePassForm();
+    showToast("✓ Password updated");
+  } catch(err) {
+    showToast("Failed to update password");
+  }
+};
+
+// ── FORM LOGIC ─────────────────────────────────────────────────────────
 let formInited = false;
 function initForm() {
   if (formInited) return;
@@ -281,12 +426,12 @@ function initForm() {
     dayContainer.appendChild(c);
   });
 
-  const periodContainer = document.getElementById("period-btns");
+  const pContainer = document.getElementById("period-btns");
   for (let p = 1; p <= 8; p++) {
     const b = document.createElement("div");
     b.className = "p-btn"; b.textContent = p;
     b.onclick = () => selectPeriod(p, b);
-    periodContainer.appendChild(b);
+    pContainer.appendChild(b);
   }
 
   const sel = document.getElementById("teacher-select");
@@ -297,11 +442,10 @@ function initForm() {
   });
 }
 
-// ── FORM SELECTION HANDLERS ───────────────────────────────────────────
 window.selectDay = function(day, el) {
-  state = { day, cls:null, period:null, teacher:null };
-  document.querySelectorAll("#day-chips .chip").forEach(c => c.classList.remove("selected"));
-  el.classList.add("selected");
+  state = {day, cls:null, period:null, teacher:null};
+  document.querySelectorAll("#day-chips .chip").forEach(c => c.classList.remove("sel"));
+  el.classList.add("sel");
   document.getElementById("val-day").textContent = day;
   markDone("card-day");
   const cc = document.getElementById("class-chips");
@@ -318,20 +462,20 @@ window.selectDay = function(day, el) {
 
 window.selectClass = function(cls, el) {
   state.cls = cls; state.period = null; state.teacher = null;
-  document.querySelectorAll("#class-chips .chip").forEach(c => c.classList.remove("selected"));
-  el.classList.add("selected");
+  document.querySelectorAll("#class-chips .chip").forEach(c => c.classList.remove("sel"));
+  el.classList.add("sel");
   document.getElementById("val-class").textContent = cls;
   markDone("card-class");
-  document.querySelectorAll(".p-btn").forEach(b => b.classList.remove("selected"));
+  document.querySelectorAll(".p-btn").forEach(b => b.classList.remove("sel"));
   document.getElementById("val-period").textContent = "";
   unlock("card-period"); lock("card-teacher"); clearTeacher(); updateProgress(); checkSubmit();
 };
 
 window.selectPeriod = function(period, el) {
   state.period = period;
-  document.querySelectorAll(".p-btn").forEach(b => b.classList.remove("selected"));
-  el.classList.add("selected");
-  document.getElementById("val-period").textContent = `Period ${period}`;
+  document.querySelectorAll(".p-btn").forEach(b => b.classList.remove("sel"));
+  el.classList.add("sel");
+  document.getElementById("val-period").textContent = "Period " + period;
   markDone("card-period");
   const suggested = timetable[state.day]?.[state.cls]?.[period] || null;
   state.teacher = suggested;
@@ -340,7 +484,7 @@ window.selectPeriod = function(period, el) {
 };
 
 window.overrideTeacher = function(val) {
-  state.teacher = val || (timetable[state.day]?.[state.cls]?.[state.period] || null);
+  state.teacher = val || timetable[state.day]?.[state.cls]?.[state.period] || null;
   checkSubmit();
 };
 
@@ -348,10 +492,10 @@ function buildTeacherDisplay(suggested) {
   const display = document.getElementById("teacher-display");
   const sel = document.getElementById("teacher-select");
   if (suggested) {
-    display.innerHTML = `<div class="teacher-card"><div class="teacher-avatar">${suggested.substring(0,2)}</div><div><div class="teacher-name">${teachers[suggested]||suggested}</div><div class="teacher-sub">Auto-matched from timetable</div></div></div>`;
+    display.innerHTML = `<div class="t-card"><div class="t-avatar">${suggested.substring(0,2)}</div><div><div class="t-name">${teachers[suggested]||suggested}</div><div class="t-sub">Auto-matched from timetable</div></div></div>`;
     sel.value = suggested;
   } else {
-    display.innerHTML = `<div class="teacher-card" style="background:#FFF8F0;border-color:#F0C080"><div class="teacher-avatar" style="background:#C07000">?</div><div><div class="teacher-name">No match found</div><div class="teacher-sub">Please select manually below</div></div></div>`;
+    display.innerHTML = `<div class="t-card" style="background:#FFF3E0;border-color:rgba(255,149,0,0.3)"><div class="t-avatar" style="background:linear-gradient(145deg,#E65100,#FF9500)">?</div><div><div class="t-name">No match found</div><div class="t-sub">Please select manually below</div></div></div>`;
     sel.value = "";
   }
 }
@@ -367,7 +511,7 @@ function markDone(id) { const c=document.getElementById(id); c.classList.remove(
 
 function updateProgress() {
   [state.day,state.cls,state.period,state.teacher].forEach((v,i) => {
-    document.getElementById(`seg${i+1}`).className = "progress-seg" + (v ? " done" : "");
+    document.getElementById("seg"+(i+1)).className = "prog-seg" + (v ? " done" : "");
   });
 }
 
@@ -375,62 +519,63 @@ function checkSubmit() {
   document.getElementById("submit-btn").disabled = !(state.day && state.cls && state.period && state.teacher);
 }
 
-// ── SUBMIT REPORT ────────────────────────────────────────────────────
 window.submitReport = async function() {
   const btn = document.getElementById("submit-btn");
-  document.getElementById("error-banner").style.display = "none";
+  document.getElementById("err-banner").style.display = "none";
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Submitting…';
+  btn.innerHTML = '<span class="spin"></span>Submitting…';
 
   const payload = {
     action: "submit",
-    day: state.day,
-    class: state.cls,
-    period: state.period,
-    teacher: state.teacher,
-    reporterEmail: currentUser?.email || "anonymous",
+    day: state.day, class: state.cls,
+    period: state.period, teacher: state.teacher,
+    reporterEmail: "anonymous-" + currentRole,
     timestamp: new Date().toISOString(),
   };
 
   try {
     await fetch(APPS_SCRIPT_URL, {
-      method: "POST", mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify(payload),
     });
 
-    document.querySelectorAll(".step-card,.progress-bar,.submit-btn,.error-banner")
-      .forEach(el => el.style.display = "none");
+    document.querySelectorAll(".step-card,.progress-row,.submit-btn,.err-banner").forEach(el => el.style.display="none");
     const time = new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-    document.getElementById("summary-box").innerHTML = `
-      <div class="summary-row"><span class="summary-key">Day</span><span class="summary-val">${payload.day}</span></div>
-      <div class="summary-row"><span class="summary-key">Class</span><span class="summary-val">${payload.class}</span></div>
-      <div class="summary-row"><span class="summary-key">Period</span><span class="summary-val">${payload.period}</span></div>
-      <div class="summary-row"><span class="summary-key">Teacher</span><span class="summary-val">${payload.teacher}</span></div>
-      <div class="summary-row"><span class="summary-key">Reported by</span><span class="summary-val">${payload.reporterEmail}</span></div>
-      <div class="summary-row"><span class="summary-key">Time</span><span class="summary-val">${time}</span></div>
-      <div class="summary-row"><span class="summary-key">Status</span><span class="summary-val" style="color:#B45309">⏳ Pending</span></div>`;
-    document.getElementById("success-screen").style.display = "block";
+    document.getElementById("sum-box").innerHTML = `
+      <div class="sum-row"><span class="sum-k">Day</span><span class="sum-v">${payload.day}</span></div>
+      <div class="sum-row"><span class="sum-k">Class</span><span class="sum-v">${payload.class}</span></div>
+      <div class="sum-row"><span class="sum-k">Period</span><span class="sum-v">${payload.period}</span></div>
+      <div class="sum-row"><span class="sum-k">Teacher</span><span class="sum-v">${payload.teacher}</span></div>
+      <div class="sum-row"><span class="sum-k">Time</span><span class="sum-v">${time}</span></div>
+      <div class="sum-row"><span class="sum-k">Status</span><span class="sum-v" style="color:var(--orange)">⏳ Pending</span></div>`;
+    document.getElementById("success-scr").style.display = "block";
+    loadPendingReports();
   } catch(err) {
-    document.getElementById("error-banner").style.display = "block";
+    document.getElementById("err-banner").style.display = "block";
     btn.disabled = false;
-    btn.innerHTML = "Submit absence report";
+    btn.innerHTML = "Submit Absence Report";
   }
 };
 
 window.resetForm = function() {
   state = {day:null,cls:null,period:null,teacher:null};
-  document.querySelectorAll(".step-card,.progress-bar,.submit-btn,.error-banner")
-    .forEach(el => el.style.display = "");
-  document.getElementById("success-screen").style.display = "none";
-  document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
-  document.querySelectorAll(".p-btn").forEach(b => b.classList.remove("selected"));
-  ["val-day","val-class","val-period"].forEach(id => document.getElementById(id).textContent="");
-  ["card-day","card-class","card-period","card-teacher"].forEach(id =>
+  document.querySelectorAll(".step-card,.progress-row,.submit-btn,.err-banner").forEach(el=>el.style.display="");
+  document.getElementById("success-scr").style.display = "none";
+  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel"));
+  document.querySelectorAll(".p-btn").forEach(b=>b.classList.remove("sel"));
+  ["val-day","val-class","val-period"].forEach(id=>document.getElementById(id).textContent="");
+  ["card-day","card-class","card-period","card-teacher"].forEach(id=>
     document.getElementById(id).classList.remove("done","locked"));
-  lock("card-class"); lock("card-period"); lock("card-teacher");
-  clearTeacher();
-  ["seg1","seg2","seg3","seg4"].forEach(id => document.getElementById(id).className="progress-seg");
+  lock("card-class"); lock("card-period"); lock("card-teacher"); clearTeacher();
+  ["seg1","seg2","seg3","seg4"].forEach(id=>document.getElementById(id).className="prog-seg");
   document.getElementById("submit-btn").disabled = true;
-  document.getElementById("submit-btn").innerHTML = "Submit absence report";
+  document.getElementById("submit-btn").innerHTML = "Submit Absence Report";
 };
+
+// ── TOAST ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
